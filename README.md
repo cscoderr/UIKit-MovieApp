@@ -2,7 +2,7 @@
 Movie app for iOS
 
 ## Overview
-The Movie app is an iOS application built using UIKit and Combine frameworks. It is designed to seamlessly display a wide range of movies by fetching data from the MovieDB API. Through the use of Combine, the app handles asynchronous data streams efficiently, ensuring smooth interaction with the API and dynamic updates to the UI. This combination of UIKit for the user interface and Combine for managing data flow creates a responsive and user-friendly experience for browsing and viewing movie information.
+The Movie app is an iOS application built using UIKit, Combine, and Core Data. It is designed to display a wide range of movies by fetching data from the MovieDB API. Using Combine, the app efficiently manages asynchronous data streams, ensuring smooth communication with the API and dynamic updates to the user interface. Core Data is integrated to allow users to save their favorite movies, providing a seamless experience for adding, storing, and managing favorite movies
 
 ### Screenshots
 
