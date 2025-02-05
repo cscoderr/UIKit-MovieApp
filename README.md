@@ -5,7 +5,7 @@ The Movie app is an iOS application built using UIKit and Combine frameworks. It
 
 ### Screenshots
 
-<img src="Screenshots/1.png" height=400 /> 
-<img src="Screenshots/2.png" height=400 />
-<img src="Screenshots/3.png" height=400 /> 
-<img src="Screenshots/4.png" height=400 /> 
+<img src="Screenshots/1.png" width="20%" vspace="10" hspace="10" /> 
+<img src="Screenshots/2.png" width="20%" vspace="10" hspace="10" />
+<img src="Screenshots/3.png" width="20%" vspace="10" hspace="10" /> 
+<img src="Screenshots/4.png" width="20%" vspace="10" hspace="10" />
