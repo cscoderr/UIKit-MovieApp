@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 class TVShowsViewController: UIViewController {
 
@@ -17,8 +18,10 @@ class TVShowsViewController: UIViewController {
     @IBOutlet weak var indicatorViewWidthConstraint: NSLayoutConstraint!
     @IBOutlet weak var tvShowsCollectionView: UICollectionView!
     
-    var collectionViewData: [Movie] = moviesData
+    var collectionViewData: [Movie] = []
     var buttons: [UIButton] = []
+    let tvShowsViewModel = TVShowsViewModel()
+    var cancellables: Set<AnyCancellable> = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -39,12 +42,31 @@ class TVShowsViewController: UIViewController {
                 action: #selector(didRefreshChanged(_:)),
                 for: .valueChanged
             )
+        
+        setupApi()
     }
     
     @objc func didRefreshChanged(_ sender: UIRefreshControl) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             self.tvShowsCollectionView.refreshControl?.endRefreshing()
         }
+    }
+    
+    func setupApi() {
+        tvShowsViewModel.getPopularTVShows()
+        
+        tvShowsViewModel.$data
+            .receive(on: DispatchQueue.main)
+            .sink { completion in
+                if case .failure(let error) = completion {
+                    print("DEBUG PRINT: Error!!!!! \(error)")
+                }
+            } receiveValue: {[weak self] data in
+                self?.collectionViewData = data
+                self?.tvShowsCollectionView.reloadData()
+            }
+            .store(in: &cancellables)
+
     }
     
     func setupCompositionalLayout() -> UICollectionViewCompositionalLayout {
@@ -84,11 +106,11 @@ class TVShowsViewController: UIViewController {
         didTabSelected(index)
         
         if index == 0 {
-            collectionViewData = moviesData
+            tvShowsViewModel.getPopularTVShows()
         } else if index == 1 {
-            collectionViewData = popularData
+            tvShowsViewModel.getairingTodayTVShows()
         } else {
-            collectionViewData = discoverData
+            tvShowsViewModel.getTopRatedTVShows()
         }
         tvShowsCollectionView.reloadData()
 //        tvShowsCollectionView
