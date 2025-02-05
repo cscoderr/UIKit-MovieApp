@@ -7,6 +7,7 @@
 
 import UIKit
 import Hero
+import Combine
 
 class MoviesViewController: UIViewController {
 
@@ -20,7 +21,8 @@ class MoviesViewController: UIViewController {
     @IBOutlet weak var indicatorViewLeadingConstraint: NSLayoutConstraint!
     @IBOutlet weak var indicatorViewTrailingConstraint: NSLayoutConstraint!
     
-    let movieModel = MoviesViewModel()
+    let movieViewModel = MoviesViewModel()
+    var cancellables: Set<AnyCancellable> = []
     
     var collectionViewData: [Movie] = []
     var buttons: [UIButton] = []
@@ -51,25 +53,28 @@ class MoviesViewController: UIViewController {
                 action: #selector(didRefreshChanged(_:)),
                 for: .valueChanged
             )
-        movieModel.getPopularMovies {[weak self] data in
-            print("data is here \(data)")
-            DispatchQueue.main.async {
-                self?.collectionViewData = data
-                self?.moviesCollectionView.reloadData()
-            }
-        }
+        movieViewModel.getPopularMovies()
+        setupBindings()
         indicatorViewTrailingConstraint.isActive = false
         
     }
     
-    @objc func didRefreshChanged(_ sender: UIRefreshControl) {
-        movieModel.getTrendingTodayMovies {[weak self] data in
-            DispatchQueue.main.async {
+    private func setupBindings() {
+        movieViewModel.$data
+            .receive(on: DispatchQueue.main)
+            .sink { completion in
+                if case let .failure(error) = completion {
+                    print("DEBUG PRINT: \(error)")
+                }
+            } receiveValue: {[weak self] data in
                 self?.collectionViewData = data
                 self?.moviesCollectionView.reloadData()
-                self?.moviesCollectionView.refreshControl?.endRefreshing()
             }
-        }
+            .store(in: &cancellables)
+    }
+    
+    @objc func didRefreshChanged(_ sender: UIRefreshControl) {
+        movieViewModel.getTrendingTodayMovies()
     }
     
     @IBAction func tabBarButtonClicked(_ sender: UIButton) {
@@ -78,37 +83,15 @@ class MoviesViewController: UIViewController {
         }
         didTabSelected(index)
         
-        
         if index == 0 {
-            movieModel.getPopularMovies {[weak self] data in
-                DispatchQueue.main.async {
-                    self?.collectionViewData = data
-                    self?.moviesCollectionView.reloadData()
-                }
-            }
+            movieViewModel.getPopularMovies()
         } else if index == 1 {
-            movieModel.getNowPlayingMovies {[weak self] data in
-                DispatchQueue.main.async {
-                    self?.collectionViewData = data
-                    self?.moviesCollectionView.reloadData()
-                }
-            }
+            movieViewModel.getNowPlayingMovies()
         } else if index == 2 {
-            movieModel.getUpcomingMovies {[weak self] data in
-                DispatchQueue.main.async {
-                    self?.collectionViewData = data
-                    self?.moviesCollectionView.reloadData()
-                }
-            }
+            movieViewModel.getUpcomingMovies()
         } else {
-            movieModel.getTopRatedMovies {[weak self] data in
-                DispatchQueue.main.async {
-                    self?.collectionViewData = data
-                    self?.moviesCollectionView.reloadData()
-                }
-            }
+            movieViewModel.getTopRatedMovies()
         }
-        moviesCollectionView.reloadData()
         moviesCollectionView.setContentOffset(.zero, animated: true)
     }
     

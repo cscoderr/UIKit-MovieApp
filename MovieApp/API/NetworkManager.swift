@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 enum NetworkManagerError: LocalizedError {
     case unknowError
@@ -62,5 +63,38 @@ class NetworkManager {
                 }
             }
         task.resume()
+    }
+    
+    func getPublisher<T: Decodable>(
+        with endpoint: Endpoint,
+        type: T.Type
+    ) -> AnyPublisher<T, NetworkManagerError> {
+        guard let urlRequest = endpoint.request else {
+            print("Unable to get request")
+            return Fail(error: NetworkManagerError.unknowError)
+                .eraseToAnyPublisher()
+        }
+        
+       return URLSession.shared.dataTaskPublisher(for: urlRequest)
+            .tryMap({ (data, response) in
+                guard let response = response as? HTTPURLResponse, (200...300) ~= response.statusCode else {
+                    print("DEBUG PRINT: Invalid status code")
+                    throw NetworkManagerError.invalidStatus
+                }
+                return data
+            })
+            .decode(
+                type: T.self,
+                decoder: {
+                    let decoder = JSONDecoder()
+                    decoder.keyDecodingStrategy = .convertFromSnakeCase
+                    return decoder
+                }()
+            )
+            .mapError({ error -> NetworkManagerError in
+                print(error)
+                return .unknowError
+            })
+            .eraseToAnyPublisher()
     }
 }

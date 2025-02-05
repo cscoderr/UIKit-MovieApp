@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 class HomeController: UIViewController {
 
@@ -15,7 +16,9 @@ class HomeController: UIViewController {
     
     let searchController = UISearchController(searchResultsController: nil)
     let movieViewModel = MoviesViewModel()
-    var data: [Movie] = []
+    let tvShowsViewModel = TVShowsViewModel()
+    var cancellables: Set<AnyCancellable> = []
+    var trendingMovies: [Movie] = []
     var popularOnTVData: [Movie] = []
     var freeToWatchMoviesData: [Movie] = []
     
@@ -23,6 +26,15 @@ class HomeController: UIViewController {
         super.viewDidLoad()
         
         navigationItem.searchController = searchController
+        registerNIB()
+        
+        tvShowsViewModel.getDiscoverTVShows()
+        movieViewModel.getTrendingTodayMovies()
+        movieViewModel.getFreeToWatchMovies()
+        setupBindings()
+    }
+    
+    private func registerNIB() {
         trendingCollectionView
             .register(
                 UINib(nibName: MoviesCollectionViewCell.identifier, bundle: nil),
@@ -40,40 +52,56 @@ class HomeController: UIViewController {
                 UINib(nibName: MoviesCollectionViewCell.identifier, bundle: nil),
                 forCellWithReuseIdentifier: MoviesCollectionViewCell.identifier
             )
+    }
+    
+    private func setupBindings() {
         
-        movieViewModel.getTrendingTodayMovies { [weak self] data in
-            DispatchQueue.main.async {
-                self?.data = data
-                self?.data.shuffle()
+        movieViewModel.$data
+            .receive(on: DispatchQueue.main)
+            .sink { completion in
+                if case let .failure(error) = completion {
+                    print("DEBUG PRINT: Error!!!!! \(error)")
+                }
+            } receiveValue: {[weak self] data in
+                self?.trendingMovies = data
+                self?.trendingMovies.shuffle()
                 self?.trendingCollectionView.reloadData()
             }
-        }
+            .store(in: &cancellables)
         
-        movieViewModel.getPopularOnTV { [weak self] data in
-            DispatchQueue.main.async {
+        
+        tvShowsViewModel.$data
+            .receive(on: DispatchQueue.main)
+            .sink { completion in
+                if case let .failure(error) = completion {
+                    print("DEBUG PRINT: Error!!!!! \(error)")
+                }
+            } receiveValue: {[weak self] data in
                 self?.popularOnTVData = data
                 self?.popularOnTVData.shuffle()
                 self?.popularCollectionView.reloadData()
             }
-        }
+            .store(in: &cancellables)
         
-        movieViewModel.getFreeToWatchMovies { [weak self] data in
-            DispatchQueue.main.async {
-                self?.freeToWatchMoviesData = data
-                self?.freeToWatchMoviesData.shuffle()
-                self?.freeToWatchCollectionView.reloadData()
-            }
-        }
+        
+//        movieViewModel.getFreeToWatchMovies { [weak self] data in
+//            DispatchQueue.main.async {
+//                self?.freeToWatchMoviesData = data
+//                self?.freeToWatchMoviesData.shuffle()
+//                self?.freeToWatchCollectionView.reloadData()
+//            }
+//        }
     }
 
 }
+
 
 // MARK: - UICollectionViewDataSource
 extension HomeController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         switch collectionView {
             case trendingCollectionView:
-                return data.count
+                return trendingMovies.count
             case popularCollectionView:
                 return popularOnTVData.count
             case freeToWatchCollectionView:
@@ -91,7 +119,7 @@ extension HomeController: UICollectionViewDataSource {
         cell.setupConstraints()
         switch collectionView {
             case trendingCollectionView:
-                cell.setup(movie: data[indexPath.row])
+                cell.setup(movie: trendingMovies[indexPath.row])
                 return cell
             case popularCollectionView:
                 cell.setup(movie: popularOnTVData[indexPath.row])
@@ -119,7 +147,7 @@ extension HomeController: UICollectionViewDelegate {
         
         switch collectionView {
             case trendingCollectionView:
-                viewcontroller.movie = data[indexPath.row]
+                viewcontroller.movie = trendingMovies[indexPath.row]
             case popularCollectionView:
                 viewcontroller.movie = popularOnTVData[indexPath.row]
             case freeToWatchCollectionView:

@@ -15,9 +15,9 @@ enum TVShowsState {
     failure
 }
 class TVShowsViewModel: ObservableObject {
-    @Published var data: [Movie] = []
-    @Published var state: TVShowsState = .initial
-    @Published var error: NetworkManagerError?
+    @Published private(set) var data: [Movie] = []
+    @Published private(set) var state: TVShowsState = .initial
+    @Published private(set) var error: NetworkManagerError?
     var cancellables: Set<AnyCancellable> = []
     let networkManager: NetworkManager
     
@@ -27,7 +27,8 @@ class TVShowsViewModel: ObservableObject {
     
     func getPopularTVShows() {
         state = .loading
-        getAsPublisher(with: Endpoint.popularTV)
+        networkManager
+            .getPublisher(with: Endpoint.popularTV, type: MovieResponse.self)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] completion in
                 switch completion {
@@ -46,8 +47,34 @@ class TVShowsViewModel: ObservableObject {
 
     }
     
+    func getDiscoverTVShows() {
+        state = .loading
+        networkManager
+            .getPublisher(with: Endpoint.discoverTV, type: MovieResponse.self)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] completion in
+                switch completion {
+                    case .finished:
+                        print("Completed")
+                        self?.state = .success
+                    case .failure(let error):
+                        self?.state = .failure
+                        print("Error \(error)")
+                        self?.error = error
+                }
+            } receiveValue: {[weak self] data in
+                self?.data = data.results
+            }
+            .store(in: &cancellables)
+        
+    }
+    
     func getairingTodayTVShows() {
-        getAsPublisher(with: Endpoint.trendingTodayTV)
+        networkManager
+            .getPublisher(
+                with: Endpoint.trendingTodayTV,
+                type: MovieResponse.self
+            )
             .receive(on: DispatchQueue.main)
             .sink { [weak self] completion in
                 switch completion {
@@ -65,7 +92,8 @@ class TVShowsViewModel: ObservableObject {
     }
     
     func getTopRatedTVShows() {
-        getAsPublisher(with: Endpoint.topRatedTV)
+        networkManager
+            .getPublisher(with: Endpoint.topRatedTV, type: MovieResponse.self)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] completion in
                 switch completion {
@@ -81,24 +109,6 @@ class TVShowsViewModel: ObservableObject {
             .store(in: &cancellables)
         
     }
-    
-//    func getTopRatedTVShows() {
-//        getAsPublisher(with: Endpoint.o)
-//            .receive(on: DispatchQueue.main)
-//            .sink { [weak self] completion in
-//                switch completion {
-//                    case .finished:
-//                        print("Completed")
-//                    case .failure(let error):
-//                        print("Error \(error)")
-//                        self?.error = error
-//                }
-//            } receiveValue: {[weak self] data in
-//                self?.data = data.results
-//            }
-//            .store(in: &cancellables)
-//        
-//    }
 }
 
 func getAsPublisher(with endpoint: Endpoint) ->  Future<MovieResponse, NetworkManagerError> {

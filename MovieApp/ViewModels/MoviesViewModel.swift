@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 enum MoviesState {
     case initial
@@ -14,200 +15,148 @@ enum MoviesState {
     case failure
 }
 
-class MoviesViewModel {
+class MoviesViewModel: ObservableObject {
     let networkManger: NetworkManager
-    var error: NetworkManagerError?
-    var state: MoviesState = .initial
-    var data: [Movie] = []
+    @Published var error: NetworkManagerError?
+    @Published var state: MoviesState = .initial
+    @Published var data: [Movie] = []
+    var cancellables: Set<AnyCancellable> = []
     
     init(networkManger: NetworkManager = .shared) {
         self.networkManger = networkManger
     }
     
-    func getPopularMovies(completion: @escaping ([Movie]) -> Void) {
+    func getPopularMovies() {
         state = .loading
-        networkManger.get(
-            with: Endpoint.popularMovies,
-            type: MovieResponse.self
-        ) { [weak self] result in
-            switch result {
-                case let .success(result):
-                    self?.state = .success
-                    self?.data = result.results
-                    completion(result.results)
-                    return
-                case let .failure(err):
-                    self?.state = .failure
-                    self?.error = err
-                    completion([])
+        networkManger
+            .getPublisher(
+                with: Endpoint.popularMovies,
+                type: MovieResponse.self
+            )
+            .receive(on: DispatchQueue.main)
+            .sink {[weak self] completion in
+                switch completion {
+                    case .finished:
+                        self?.state = .success
+                    case .failure(let error):
+                        self?.state = .failure
+                        self?.error = error
+                }
+            } receiveValue: {[weak self] data in
+                self?.data = data.results
             }
-        }
+            .store(in: &cancellables)
         
     }
     
-    func getTrendingTodayMovies( completion: @escaping ([Movie]) -> Void) {
+    func getTrendingTodayMovies() {
         state = .loading
-        networkManger.get(
-            with: Endpoint.trendingTodayMovies,
-            type: MovieResponse.self
-        ) { [weak self] result in
-            switch result {
-                case let .success(result):
-                    self?.state = .success
-                    self?.data = result.results
-                    completion(result.results)
-                case let .failure(err):
-                    self?.state = .failure
-                    self?.error = err
-                    completion([])
-                    
+        networkManger
+            .getPublisher(
+                with: Endpoint.trendingTodayMovies,
+                type: MovieResponse.self
+            )
+            .receive(on: DispatchQueue.main)
+            .sink {[weak self] completion in
+                switch completion {
+                    case .finished:
+                        self?.state = .success
+                    case .failure(let error):
+                        self?.state = .failure
+                        self?.error = error
+                }
+            } receiveValue: {[weak self] data in
+                self?.data = data.results
             }
-        }
+            .store(in: &cancellables)
+    }
+    
+    func getNowPlayingMovies() {
+        state = .loading
+        networkManger
+            .getPublisher(
+                with: Endpoint.nowPlayingMovies,
+                type: MovieResponse.self
+            )
+            .receive(on: DispatchQueue.main)
+            .sink {[weak self] completion in
+                switch completion {
+                    case .finished:
+                        self?.state = .success
+                    case .failure(let error):
+                        self?.state = .failure
+                        self?.error = error
+                }
+            } receiveValue: {[weak self] data in
+                self?.data = data.results
+            }
+            .store(in: &cancellables)
+    }
+    
+    func getUpcomingMovies() {
+        state = .loading
+        networkManger
+            .getPublisher(
+                with: Endpoint.upcomingMovies,
+                type: MovieResponse.self
+            )
+            .receive(on: DispatchQueue.main)
+            .sink {[weak self] completion in
+                switch completion {
+                    case .finished:
+                        self?.state = .success
+                    case .failure(let error):
+                        self?.state = .failure
+                        self?.error = error
+                }
+            } receiveValue: {[weak self] data in
+                self?.data = data.results
+            }
+            .store(in: &cancellables)
+    }
+    
+    func getTopRatedMovies() {
+        state = .loading
+        networkManger
+            .getPublisher(
+                with: Endpoint.topRatedMovies,
+                type: MovieResponse.self
+            )
+            .receive(on: DispatchQueue.main)
+            .sink {[weak self] completion in
+                switch completion {
+                    case .finished:
+                        self?.state = .success
+                    case .failure(let error):
+                        self?.state = .failure
+                        self?.error = error
+                }
+            } receiveValue: {[weak self] data in
+                self?.data = data.results
+            }
+            .store(in: &cancellables)
         
     }
     
-    func getNowPlayingMovies( completion: @escaping ([Movie]) -> Void) {
+    func getFreeToWatchMovies() {
         state = .loading
-        networkManger.get(
-            with: Endpoint.nowPlayingMovies,
-            type: MovieResponse.self
-        ) { [weak self] result in
-            switch result {
-                case let .success(result):
-                    self?.state = .success
-                    self?.data = result.results
-                    completion(result.results)
-                case let .failure(err):
-                    self?.state = .failure
-                    self?.error = err
-                    completion([])
-                    
+        networkManger
+            .getPublisher(
+                with: Endpoint.discoverMovie,
+                type: MovieResponse.self
+            )
+            .receive(on: DispatchQueue.main)
+            .sink {[weak self] completion in
+                switch completion {
+                    case .finished:
+                        self?.state = .success
+                    case .failure(let error):
+                        self?.state = .failure
+                        self?.error = error
+                }
+            } receiveValue: {[weak self] data in
+                self?.data = data.results
             }
-        }
-        
-    }
-    
-    func getUpcomingMovies( completion: @escaping ([Movie]) -> Void) {
-        state = .loading
-        networkManger.get(
-            with: Endpoint.upcomingMovies,
-            type: MovieResponse.self
-        ) { [weak self] result in
-            switch result {
-                case let .success(result):
-                    self?.state = .success
-                    self?.data = result.results
-                    completion(result.results)
-                case let .failure(err):
-                    self?.state = .failure
-                    self?.error = err
-                    completion([])
-                    
-            }
-        }
-        
-    }
-    
-    func getTopRatedMovies( completion: @escaping ([Movie]) -> Void) {
-        state = .loading
-        networkManger.get(
-            with: Endpoint.topRatedMovies,
-            type: MovieResponse.self
-        ) { [weak self] result in
-            switch result {
-                case let .success(result):
-                    self?.state = .success
-                    self?.data = result.results
-                    completion(result.results)
-                case let .failure(err):
-                    self?.state = .failure
-                    self?.error = err
-                    completion([])
-                    
-            }
-        }
-        
-    }
-    
-    func getPopularOnTV( completion: @escaping ([Movie]) -> Void) {
-        state = .loading
-        networkManger.get(
-            with: Endpoint.discoverTV,
-            type: MovieResponse.self
-        ) { [weak self] result in
-            switch result {
-                case let .success(result):
-                    self?.state = .success
-                    self?.data = result.results
-                    completion(result.results)
-                case let .failure(err):
-                    self?.state = .failure
-                    self?.error = err
-                    completion([])
-                    
-            }
-        }
-        
-    }
-    
-    func getFreeToWatchMovies( completion: @escaping ([Movie]) -> Void) {
-        state = .loading
-        networkManger.get(
-            with: Endpoint.discoverMovie,
-            type: MovieResponse.self
-        ) { [weak self] result in
-            switch result {
-                case let .success(result):
-                    self?.state = .success
-                    self?.data = result.results
-                    completion(result.results)
-                case let .failure(err):
-                    self?.state = .failure
-                    self?.error = err
-                    completion([])
-                    
-            }
-        }
-        
-    }
-    
-    func getSimilarMovies(movieId: Int, completion: @escaping ([Movie]) -> Void) {
-        state = .loading
-        networkManger.get(
-            with: Endpoint.similar(type: "movie", id: movieId),
-            type: MovieResponse.self
-        ) { [weak self] result in
-            switch result {
-                case let .success(result):
-                    self?.state = .success
-                    self?.data = result.results
-                    completion(result.results)
-                case let .failure(err):
-                    self?.state = .failure
-                    self?.error = err
-                    completion([])
-                    
-            }
-        }
-        
-    }
-    
-    func getMovieCasts(movieId: Int, completion: @escaping ([Cast]) -> Void) {
-        state = .loading
-        networkManger.get(
-            with: Endpoint.credit(type: "movie", id: movieId),
-            type: CastResponse.self
-        ) { [weak self] result in
-            switch result {
-                case let .success(result):
-                    self?.state = .success
-                    completion(result.cast)
-                case let .failure(err):
-                    self?.state = .failure
-                    self?.error = err
-                    completion([])
-                    
-            }
-        }
+            .store(in: &cancellables)
     }
 }

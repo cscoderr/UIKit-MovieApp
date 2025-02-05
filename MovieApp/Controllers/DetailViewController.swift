@@ -7,6 +7,7 @@
 
 import UIKit
 import Kingfisher
+import Combine
 
 class DetailViewController: UIViewController {
 
@@ -19,7 +20,8 @@ class DetailViewController: UIViewController {
     @IBOutlet weak var similarCollectionView: UICollectionView!
     var movie: Movie!
     
-    let movieModel = MoviesViewModel()
+    let detailsViewModel = DetailsViewModel()
+    var cancellables: Set<AnyCancellable> = []
     var movieCastData: [Cast] = []
     var similarMovieData: [Movie] = []
     
@@ -71,25 +73,45 @@ class DetailViewController: UIViewController {
         tapGesture.addTarget(self, action: #selector(backButtonPressed))
         backButtonImageView.addGestureRecognizer(tapGesture)
         
-        movieModel.getMovieCasts(movieId: movie.id) {[weak self] data in
-            DispatchQueue.main.async {
-                self?.movieCastData = data
-                self?.castCollectionView.reloadData()
-            }
-        }
+        detailsViewModel.getMovieCasts(movieId: movie.id)
+        detailsViewModel
+            .getSimilarMovies(movieId: movie.id)
         
-        movieModel
-            .getSimilarMovies(movieId: movie.id) {[weak self] data in
-            DispatchQueue.main.async {
-                self?.similarMovieData = data
-                self?.similarCollectionView.reloadData()
-            }
-        }
+        setupBindings()
 
     }
     
     @objc func backButtonPressed(_ sender: UITapGestureRecognizer) {
         self.dismiss(animated: true)
+    }
+    
+    private func setupBindings() {
+        detailsViewModel.$castsData
+            .receive(on: DispatchQueue.main)
+            .sink { completion in
+                if case let .failure(error) = completion {
+                    print("DEBUG PRINT: Error!!!!! \(error)")
+                }
+            } receiveValue: {[weak self] data in
+                self?.movieCastData = data
+                self?.movieCastData.shuffle()
+                self?.castCollectionView.reloadData()
+            }
+            .store(in: &cancellables)
+        
+        detailsViewModel.$data
+            .receive(on: DispatchQueue.main)
+            .sink { completion in
+                if case let .failure(error) = completion {
+                    print("DEBUG PRINT: Error!!!!! \(error)")
+                }
+            } receiveValue: {[weak self] data in
+                self?.similarMovieData = data
+                self?.similarMovieData.shuffle()
+                self?.similarCollectionView.reloadData()
+            }
+            .store(in: &cancellables)
+        
     }
     
     func setupCompositionalLayout() -> UICollectionViewCompositionalLayout {
