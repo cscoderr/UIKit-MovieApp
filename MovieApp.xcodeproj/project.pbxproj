@@ -8,12 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		330983832D4C5CED00C428D8 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 330983822D4C5CED00C428D8 /* Kingfisher */; };
+		337733412D541E3500A41C81 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 337733402D541E2E00A41C81 /* README.md */; };
 		33AE19432D4FF26E005A9AE3 /* Hero in Frameworks */ = {isa = PBXBuildFile; productRef = 33AE19422D4FF26E005A9AE3 /* Hero */; };
 		33F3D1BE2D4FA1C500DCD383 /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 33F3D1BD2D4FA1C500DCD383 /* Config.xcconfig */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		3309835C2D4C4A1500C428D8 /* MovieApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MovieApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		337733402D541E2E00A41C81 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		33F3D1BD2D4FA1C500DCD383 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -54,6 +56,7 @@
 		330983532D4C4A1500C428D8 = {
 			isa = PBXGroup;
 			children = (
+				337733402D541E2E00A41C81 /* README.md */,
 				33F3D1BD2D4FA1C500DCD383 /* Config.xcconfig */,
 				3309835E2D4C4A1500C428D8 /* MovieApp */,
 				3309835D2D4C4A1500C428D8 /* Products */,
@@ -138,6 +141,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				337733412D541E3500A41C81 /* README.md in Resources */,
 				33F3D1BE2D4FA1C500DCD383 /* Config.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
