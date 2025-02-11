@@ -23,10 +23,14 @@ class FavoriteTableViewCell: UITableViewCell {
         // Initialization code
     }
     
-    func setup(movie: Movie) {
-        favoriteTitleLabel.text = movie.title ?? movie.name
+    func setup(favorite: Favorite) {
+        favoriteTitleLabel.text = favorite.title ?? favorite.name
+        favoriteDescriptionLabel.text = favorite.overview ?? ""
+        favoriteRatingLabel.text = String(favorite.voteAverage)
         favoriteImageView?.kf
-            .setImage(with: movie.imageUrl)
+            .setImage(
+                with: favorite.imageUrl
+            )
     }
 
     override func setSelected(_ selected: Bool, animated: Bool) {

@@ -41,6 +41,21 @@ struct Movie: Codable {
         let urlString = "\(Constants.imageBaseURL)\(backdrop)"
         return URL(string: urlString)
     }
+    
+    func toFavorite(favorite: Favorite) {
+        favorite.id = Int64(id)
+        favorite.name = name
+        favorite.title = title
+        favorite.backdropPath = backdropPath
+        favorite.posterPath = posterPath
+        favorite.overview = overview
+        favorite.voteAverage = voteAverage
+        favorite.voteCount = Int64(voteCount)
+        favorite.releaseDate = releaseDate
+        favorite.originalTitle = originalTitle
+        favorite.originalLanguage = originalLanguage
+        favorite.adult = adult
+    }
 }
 
 let moviesData: [Movie] = (

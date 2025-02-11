@@ -8,22 +8,27 @@
 import UIKit
 import Kingfisher
 import Combine
+import CoreData
 
 class DetailViewController: UIViewController {
 
     @IBOutlet weak var backgroundImageView: UIImageView!
     @IBOutlet weak var posterImageView: UIImageView!
     @IBOutlet weak var backButtonImageView: UIImageView!
-    @IBOutlet weak var favoriteImageView: UIImageView!
     @IBOutlet weak var overviewLabel: UILabel!
     @IBOutlet weak var castCollectionView: UICollectionView!
     @IBOutlet weak var similarCollectionView: UICollectionView!
+    @IBOutlet weak var favoriteButton: UIButton!
+    
     var movie: Movie!
     
     let detailsViewModel = DetailsViewModel()
     var cancellables: Set<AnyCancellable> = []
     var movieCastData: [Cast] = []
     var similarMovieData: [Movie] = []
+    var favorite: Favorite? = nil
+    
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -76,6 +81,7 @@ class DetailViewController: UIViewController {
         detailsViewModel.getMovieCasts(movieId: movie.id)
         detailsViewModel
             .getSimilarMovies(movieId: movie.id)
+        loadFavorite()
         
         setupBindings()
 
@@ -112,6 +118,50 @@ class DetailViewController: UIViewController {
             }
             .store(in: &cancellables)
         
+    }
+    
+    func loadFavorite() {
+        do {
+            let request: NSFetchRequest<Favorite> = Favorite.fetchRequest()
+            let data = try context.fetch(request)
+            favorite = data.first{ $0.id == movie.id }
+            let favoriteImage = favorite == nil ? UIImage(systemName: "star") : UIImage(systemName: "star.fill")
+            favoriteButton.setImage(favoriteImage, for: .normal)
+        } catch {
+            print("Error fetching Favorite \(error)")
+        }
+    }
+    
+    func addFavorite() {
+        let favorite = Favorite(context: context)
+        movie.toFavorite(favorite: favorite)
+    }
+    
+    func saveFavorite() {
+        do {
+            try context.save()
+            loadFavorite()
+        } catch {
+            print("Unable to save favorite \(error)")
+        }
+    }
+    
+    func updateFavorite() {
+        favorite?.setValue("Tomiwa", forKey: "name")
+    }
+    
+    func removeFavorite() {
+        context.delete(favorite!)
+        favorite = nil
+    }
+    
+    @IBAction func favoriteButtonPressed(_ sender: UIButton) {
+        if favorite == nil {
+            addFavorite()
+        } else {
+            removeFavorite()
+        }
+        saveFavorite()
     }
     
     func setupCompositionalLayout() -> UICollectionViewCompositionalLayout {
